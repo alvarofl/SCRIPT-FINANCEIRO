@@ -18,13 +18,17 @@ def scanner_opcoes(tipo, S, r, t, preco_opcao, petroleo, usd, dividendos):
         try:
             opcoes = calcular_opcoes(tipo, S, strike, r, t, preco_opcao)
 
+            if opcoes is None:
+                continue
+
             iv = opcoes["iv"]
             delta = opcoes["delta"]
             gamma = opcoes["gamma"]
             vega = opcoes["vega"]
             theta = opcoes["theta"]
+            rho = opcoes["rho"]
 
-            sinal, score = gerar_sinal(iv, delta, gamma, vega, theta, petroleo, usd, dividendos)
+            sinal, score = gerar_sinal(iv, delta, gamma, vega, theta, rho, petroleo, usd, dividendos)
 
             resultados.append({
                 "strike": strike,
@@ -33,11 +37,12 @@ def scanner_opcoes(tipo, S, r, t, preco_opcao, petroleo, usd, dividendos):
                 "gamma": gamma,
                 "vega": vega,
                 "theta": theta,
+                "rho": rho,
                 "sinal": sinal,
                 "score": score
             })
 
-        except:
-            pass
+        except Exception as e:
+            print("Erro no strike", strike, e)
 
     return resultados

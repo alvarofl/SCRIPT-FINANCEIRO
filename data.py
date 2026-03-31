@@ -2,56 +2,47 @@ import yfinance as yf
 from datetime import datetime
 
 
-def get_petroleo():
-    brent = yf.Ticker("BZ=F")
-    hist = brent.history(period="1d")
-    return float(hist["Close"].iloc[-1])
-
-
-def get_usdbrl():
-    usd = yf.Ticker("BRL=X")
-    hist = usd.history(period="1d")
-    return float(hist["Close"].iloc[-1])
-
-
-def get_petr4():
-    petr4 = yf.Ticker("PETR4.SA")
-    hist = petr4.history(period="1d")
-    return float(hist["Close"].iloc[-1])
+def get_price(ticker):
+    try:
+        ativo = yf.Ticker(ticker)
+        hist = ativo.history(period="1d")
+        return float(hist["Close"].iloc[-1])
+    except Exception as e:
+        print(f"Erro ao buscar {ticker}: {e}")
+        return None
 
 
 def get_dividendos():
-    import yfinance as yf
-    from datetime import datetime
+    try:
+        petr4 = yf.Ticker("PETR4.SA")
+        div = petr4.dividends
 
-    petr4 = yf.Ticker("PETR4.SA")
-    div = petr4.dividends
+        if len(div) == 0:
+            return {
+                "teve_dividendo_recente": False,
+                "ultimo_dividendo": None
+            }
 
-    if len(div) == 0:
-        return False
+        ultimo_dividendo = div.index[-1].tz_localize(None)
+        hoje = datetime.utcnow()
+        dias = (hoje - ultimo_dividendo).days
 
-    ultimo_dividendo = div.index[-1]
+        return {
+            "teve_dividendo_recente": dias < 90,
+            "ultimo_dividendo": ultimo_dividendo,
+            "dias_desde_dividendo": dias
+        }
 
-    # Remover timezone para evitar erro
-    ultimo_dividendo = ultimo_dividendo.tz_localize(None)
-
-    hoje = datetime.now()
-
-    dias = (hoje - ultimo_dividendo).days
-
-    # Se teve dividendo nos últimos 90 dias
-    if dias < 90:
-        return True
-    else:
-        return False
- 
+    except Exception as e:
+        print(f"Erro ao buscar dividendos: {e}")
+        return None
 
 
 def get_dados():
     dados = {
-        "petroleo": get_petroleo(),
-        "usd": get_usdbrl(),
-        "petr4": get_petr4(),
+        "petroleo": get_price("BZ=F"),
+        "usd": get_price("BRL=X"),
+        "petr4": get_price("PETR4.SA"),
         "dividendos": get_dividendos()
     }
 
